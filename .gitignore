@@ -1,6 +1,8 @@
 # application files
 *.blend1
 *.3dmbak
+*.npy
+*.npz
 
 
 # Byte-compiled / optimized / DLL files
