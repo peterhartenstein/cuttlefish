@@ -11,8 +11,10 @@ bl_info = {
 
 import bpy
 import numpy as np
-import time as t
-from os import system
+import os
+from pathlib import Path
+from bpy.props import(StringProperty, PointerProperty)
+from bpy.types import (Panel, PropertyGroup)
 
 
 def framessequence_list():
@@ -20,8 +22,8 @@ def framessequence_list():
     start = bpy.data.scenes["Scene"].frame_start
     end = bpy.data.scenes["Scene"].frame_end
 
-    frames = list(range(start,end))
-    
+    frames = list(range(start,end+1))
+    return frames
 
 def get_vertco(FRAMES):
 
@@ -59,17 +61,45 @@ def get_vertco(FRAMES):
             vert_data[i, j, 1] = vertco[1]
             vert_data[i, j, 2] = vertco[2]
     
-    return vert_data, vertcount
+    return vert_data
 
 
-def save_npy(np_array):
-    np.save("npy_data/data.npy", np_array)
+def save_npy(np_array, filepath):
+    
+    np.save(filepath, np_array)
 
 
+class MyProperties(PropertyGroup):
+
+    path: StringProperty(
+        name="",
+        description="Path to Directory",
+        default="",
+        maxlen=1024,
+        subtype='DIR_PATH') 
+  
+
+class ExportVertCoords(bpy.types.Operator):
+
+    bl_idname = "object.export_vert_coords"
+    bl_label = "Export Vert Coords"
+    
+    @classmethod
+    def poll(cls, context):
+        return context.active_object is not None
+
+    def execute(self, context):                                  # implement+return timer
+        a = get_vertco(framessequence_list())
+        filepath = context.scene.my_tool.path + "\data.npy"
+        save_npy(a,filepath)
+        #print(a)                                                #print
+        #print(filepath)                                         #print
+        return {'FINISHED'}
 
 
 class VIEW3D_PT_cuttlefish(bpy.types.Panel):
 
+    bl_idname = "VIEW3D_PT_cuttlefish"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
 
@@ -78,19 +108,45 @@ class VIEW3D_PT_cuttlefish(bpy.types.Panel):
     
     
     def draw(self, context):
-        row = self.layout.row()
-        row.operator("Save Location", text="file path")
+                
+        layout = self.layout
+        scene = context.scene
+        
+        row = layout.row()
+        row.label(text="Active Object: {}".format(context.object.name))
+
+        row = layout.row()
+        row.label(text="Vertex Count: {}".format(len(context.object.data.vertices)))
+
+        row = layout.column(align=True)
+        row.prop(scene.my_tool, "path", text ="")
+
+        row = layout.row()
+        row.operator("object.export_vert_coords")             
+      
             
 
+#----------------------------------------------------------------
+# Registration
 
-
+classes = (
+    MyProperties,
+    ExportVertCoords,
+    VIEW3D_PT_cuttlefish
+)
 
 def register():
-    bpy.utils.register_class(VIEW3D_PT_cuttlefish)
+    from bpy.utils import register_class
+    for cls in classes:
+        register_class(cls)
 
+    bpy.types.Scene.my_tool = PointerProperty(type=MyProperties)
 
 def unregister():
-    bpy.utils.unregister_class(VIEW3D_PT_cuttlefish)
+    from bpy.utils import unregister_class
+    for cls in reversed(classes):
+        unregister_class(cls)
+    del bpy.types.Scene.mytool
     
 
 if __name__ == "__main__":
