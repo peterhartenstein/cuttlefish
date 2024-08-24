@@ -10,8 +10,8 @@ bl_info = {
 
 
 import bpy
+import time as t
 import numpy as np
-import os
 from pathlib import Path
 from bpy.props import(StringProperty, PointerProperty)
 from bpy.types import (Panel, PropertyGroup)
@@ -88,12 +88,14 @@ class ExportVertCoords(bpy.types.Operator):
     def poll(cls, context):
         return context.active_object is not None
 
-    def execute(self, context):                                  # implement+return timer
+    def execute(self, context):
+        start_time = t.time()
         a = get_vertco(framessequence_list())
         filepath = context.scene.my_tool.path + "\data.npy"
         save_npy(a,filepath)
-        #print(a)                                                #print
-        #print(filepath)                                         #print
+        end_time = t.time()
+        elapsed_time = end_time - start_time
+        VIEW3D_PT_cuttlefish.timer(elapsed_time)
         return {'FINISHED'}
 
 
@@ -105,7 +107,7 @@ class VIEW3D_PT_cuttlefish(bpy.types.Panel):
 
     bl_category = "cuttlefish"
     bl_label = "cuttlefish options"
-    
+    elapsed_time = 1
     
     def draw(self, context):
                 
@@ -123,7 +125,13 @@ class VIEW3D_PT_cuttlefish(bpy.types.Panel):
 
         row = layout.row()
         row.operator("object.export_vert_coords")             
-      
+
+        row = layout.row()
+        row.label(text = "Elapsed Time: {}".format(str(round(self.elapsed_time, 3))))
+    
+    @staticmethod
+    def timer(elapsed_time):
+        VIEW3D_PT_cuttlefish.elapsed_time = elapsed_time
             
 
 #----------------------------------------------------------------
