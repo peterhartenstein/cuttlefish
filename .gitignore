@@ -1,4 +1,5 @@
 # application files
+*.blend
 *.blend1
 *.3dmbak
 *.npy
