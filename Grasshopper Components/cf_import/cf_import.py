@@ -7,7 +7,9 @@ import time as t
 """
 component inputs(name - type):
     frame_request - int
+    whole_animation - bool
     file_path - File Path
+    
 
 component outputs(name - type):
     out - terminal, gh specific
@@ -16,37 +18,48 @@ component outputs(name - type):
     frame - ghdoc Object
 """
 
-frame_request = frame_request - 1   #match Blenders timeline indexing
-
 start_time = t.time()
 
-vert_data = np.load(file_path, mmap_mode="r", )
+# Match Blender's timeline indexing
+frame_request = frame_request - 1
 
-frame_quantity = vert_data.shape[0]
-vertcount = vert_data.shape[1]      
+def load_vert_data(file_path):
 
-vert_data = vert_data.astype(np.float64)
+    return np.load(file_path, mmap_mode="r").astype(np.float64)
 
-tree_allFrames = DataTree[object]()
-tree_frame = DataTree[object]()
+def create_point_tree(vert_data, frames):
 
-#reconstruct animation to tree
-for frame in range (frame_quantity):
-    frame_path = GH_Path(frame)
+    tree = DataTree[object]()
+    vertcount = vert_data.shape[1]
+    
+    for frame in frames:
+        frame_path = GH_Path(frame)
+        points = [Rhino.Geometry.Point3d(vert_data[frame, vert, 0],  # x
+                                         vert_data[frame, vert, 1],  # y
+                                         vert_data[frame, vert, 2])  # z
+                  for vert in range(vertcount)]
+        for point in points:
+            tree.Add(point, frame_path)
 
-    for vert in range(vertcount):
-        point = Rhino.Geometry.Point3d(vert_data[frame, vert, 0], # x
-                                       vert_data[frame, vert, 1], # y
-                                       vert_data[frame, vert, 2]) # z
-        tree_allFrames.Add(point, frame_path)
+    return tree
 
-        if frame == frame_request:
-            tree_frame.Add(point)
+def process_frames(file_path, frame_request, whole_animation):
+
+    vert_data = load_vert_data(file_path)
+    
+    if whole_animation:
+        frames = range(vert_data.shape[0])
+        tree_all_frames = create_point_tree(vert_data, frames)
+        tree_frame = create_point_tree(vert_data, [frame_request])
+        return tree_all_frames, tree_frame
+
+    else:
+        frames = [frame_request]
+        tree_frame = create_point_tree(vert_data, frames)
+        return None, tree_frame
+
+
+frames, frame = process_frames(file_path, frame_request, whole_animation)
 
 end_time = t.time()
-elapsed_time = end_time - start_time
-
-#gh component output 
-frames = tree_allFrames
-frame = tree_frame
-elapsed_time = "{} seconds".format(str(round(elapsed_time,3)))
+elapsed_time = "{} seconds".format(str(round(end_time - start_time, 3)))
