@@ -2,20 +2,20 @@ import Rhino
 import numpy as np
 from Grasshopper import DataTree
 from Grasshopper.Kernel.Data import GH_Path
+import os
 import time as t
 
 """
 component inputs(name - type):
     frame_request - int
     whole_animation - bool
-    file_path - File Path
+    directory_path - File Path (Folder)
     
-
 component outputs(name - type):
     out - terminal, gh specific
     elapsed_time - str
-    frames - ghdoc Object
-    frame - ghdoc Object
+    mesh_frame - Rhino.Geometry.Mesh
+    mesh_frames - List of Rhino.Geometry.Mesh
 """
 
 start_time = t.time()
@@ -23,43 +23,50 @@ start_time = t.time()
 # Match Blender's timeline indexing
 frame_request = frame_request - 1
 
-def load_vert_data(file_path):
+def load_data(file_path, allow_pickle=False):
+    return np.load(file_path, allow_pickle=allow_pickle)
 
-    return np.load(file_path, mmap_mode="r").astype(np.float64)
+def load_vertices(directory_path):
+    vert_file = os.path.join(directory_path, "vertices.npy")
+    return load_data(vert_file).astype(np.float64)
 
-def create_point_tree(vert_data, frames):
+def load_edges(directory_path):                                 # not in use, keep for later
+    edge_file = os.path.join(directory_path, "edges.npy")
+    return load_data(edge_file).astype(np.int32)
 
-    tree = DataTree[object]()
-    vertcount = vert_data.shape[1]
+def load_faces(directory_path):
+    face_file = os.path.join(directory_path, "faces.npy")
+    faces = load_data(face_file, allow_pickle=True)
+    return faces
+
+def create_mesh(vertices, faces):
+    mesh = Rhino.Geometry.Mesh()
     
-    for frame in frames:
-        frame_path = GH_Path(frame)
-        points = [Rhino.Geometry.Point3d(vert_data[frame, vert, 0],  # x
-                                         vert_data[frame, vert, 1],  # y
-                                         vert_data[frame, vert, 2])  # z
-                  for vert in range(vertcount)]
-        for point in points:
-            tree.Add(point, frame_path)
+    #Add vertices to the mesh
+    for vert in vertices:
+        mesh.Vertices.Add(vert[0], vert[1], vert[2])
 
-    return tree
+    for face in faces:
+        if isinstance(face, list) and len(face) >= 3:
+            mesh.Faces.AddFace(*face)
+    return mesh
 
-def process_frames(file_path, frame_request, whole_animation):
+def process_frames(directory_path, frame_request, whole_animation):
+    vertices = load_vertices(directory_path)
+    faces = load_faces(directory_path)
 
-    vert_data = load_vert_data(file_path)
-    
+    mesh_frames = DataTree[Rhino.Geometry.Mesh]()
+
     if whole_animation:
-        frames = range(vert_data.shape[0])
-        tree_all_frames = create_point_tree(vert_data, frames)
-        tree_frame = create_point_tree(vert_data, [frame_request])
-        return tree_all_frames, tree_frame
-
+        frames = range(vertices.shape[0])
+        for frame in frames:
+            mesh = create_mesh(vertices[frame], faces[frame])
+            mesh_frames.Add(mesh, GH_Path(frame))
+        return create_mesh(vertices[frame_request], faces[frame_request]), mesh_frames 
     else:
-        frames = [frame_request]
-        tree_frame = create_point_tree(vert_data, frames)
-        return None, tree_frame
+        return create_mesh(vertices[frame_request], faces[frame_request]), None
 
-
-frames, frame = process_frames(file_path, frame_request, whole_animation)
+mesh_frame, mesh_frames = process_frames(directory_path, frame_request, whole_animation)
 
 end_time = t.time()
 elapsed_time = "{} seconds".format(str(round(end_time - start_time, 3)))
