@@ -80,6 +80,39 @@ def get_vertco(FRAMES, obj):
     return vert_data
 
 
+def get_edges(FRAMES, obj):
+    
+    frame_quantity = len(FRAMES)
+    edgecount = len(obj.data.edges)
+    edge_data = np.empty(shape=(frame_quantity, edgecount, 2), dtype=np.int32)
+
+    for i in range(frame_quantity):
+        bpy.context.scene.frame_set(FRAMES[i])
+        depsgraph = bpy.context.evaluated_depsgraph_get()
+        obj_eval = obj.evaluated_get(depsgraph)
+        edges = obj_eval.data.edges
+        for j, edge in enumerate(edges):
+            edge_data[i, j, 0] = edge.vertices[0]
+            edge_data[i, j, 1] = edge.vertices[1]
+
+    return edge_data
+
+
+def get_faces(FRAMES, obj):
+    framequantity = len(FRAMES)
+    facecount = len(obj.data.polygons)
+    face_data = np.empty(shape=(framequantity, facecount), dtype=object)
+
+    for i in range(framequantity):
+        depsgraph = bpy.context.evaluated_depsgraph_get()
+        obj_eval = obj.evaluated_get(depsgraph)
+        faces = obj_eval.data.polygons
+        for j, face in enumerate(faces):
+            face_data[i, j] = [v for v in face.vertices]
+
+    return face_data
+
+
 def save_npy(np_array, filepath):
     np.save(filepath, np_array)
 
@@ -134,8 +167,24 @@ class MyProperties(PropertyGroup):
         description = "Object to export"
     )
 
+    export_vertices: BoolProperty(
+        name="Vertices",
+        description="Export vertex data",
+        default=True
+    )
+    export_edges: BoolProperty(
+        name="Edges",
+        description="Export edge data",
+        default=False
+    )
+    export_faces: BoolProperty(
+        name="Faces",
+        description="Export face data",
+        default=False
+    )
 
-class ExportVertCoords(bpy.types.Operator):
+
+class ExportMeshData(bpy.types.Operator):
 
     bl_idname = "object.export_vert_coords"
     bl_label = "Export Vert Coords"
@@ -146,13 +195,25 @@ class ExportVertCoords(bpy.types.Operator):
 
     def execute(self, context):
         start_time = t.time()
-
         obj = context.scene.my_tool.selected_object
         frames = framessequence_list()
-        a = get_vertco(frames, obj)
-        
-        filepath = context.scene.my_tool.path + "\data.npy"
-        save_npy(a,filepath)
+
+        base_path = context.scene.my_tool.path.replace("\\", "/").rstrip("/")
+
+        if context.scene.my_tool.export_vertices:
+            vertices = get_vertco(frames, obj)      
+            filepath = base_path + "/vertices.npy"
+            save_npy(vertices,filepath)
+
+        if context.scene.my_tool.export_edges:
+            edges = get_edges(frames, obj)
+            filepath = base_path + "/edges.npy"
+            save_npy(vertices,filepath)
+
+        if context.scene.my_tool.export_faces:
+            faces = get_faces(frames, obj)
+            filepath = base_path + "/faces.npy"
+            save_npy(faces,filepath)
 
         end_time = t.time()
         elapsed_time = end_time - start_time
@@ -165,7 +226,6 @@ class VIEW3D_PT_cuttlefish(bpy.types.Panel):
     bl_idname = "VIEW3D_PT_cuttlefish"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
-
     bl_category = "cuttlefish"
     bl_label = "cuttlefish options"
     elapsed_time = 0
@@ -192,6 +252,7 @@ class VIEW3D_PT_cuttlefish(bpy.types.Panel):
         row = layout.column(align=True)
         row.prop(scene.my_tool, "path", text ="")
 
+
         #Frame Selection Mode
         row = layout.row()
         row.prop(my_tool, "frame_selection_mode", text="Frame Selection Mode")
@@ -215,6 +276,14 @@ class VIEW3D_PT_cuttlefish(bpy.types.Panel):
             row = layout.row()
             row.prop(my_tool, "custom_frames_input", text="Custom Frames")
 
+        #BTogs for vert,edge,face
+        row = layout.row()
+        row.label(text="Export Mesh Data")
+        row = layout.row(align=True)
+        row.prop(my_tool, "export_vertices", text="Vertices")
+        row.prop(my_tool, "export_edges", text="Edges")
+        row.prop(my_tool, "export_faces", text="Faces")
+        
         #export button
         row = layout.row()
         row.operator("object.export_vert_coords")             
@@ -233,7 +302,7 @@ class VIEW3D_PT_cuttlefish(bpy.types.Panel):
 
 classes = (
     MyProperties,
-    ExportVertCoords,
+    ExportMeshData,
     VIEW3D_PT_cuttlefish
 )
 
