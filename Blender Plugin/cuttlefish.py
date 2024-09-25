@@ -1,7 +1,7 @@
 bl_info = {
     "name": "cuttlefish",
     "author": "Peter Hartenstein",
-    "version": (0, 0, 1),
+    "version": (0, 0, 2),
     "blender": (4, 20, 0),
     "location": "3D Viewport > Sidebar > cuttlefish",
     "description": "Translating animated geometry from Blender to Grasshopper",
