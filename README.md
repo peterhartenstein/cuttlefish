@@ -1,21 +1,19 @@
-# cuttlefish
+# Cuttlefish
 Translating animated geometry from Blender to Grasshopper. Born out of the need to convert animations and motion capture into manufacturable analog artifacts.
 
-!["Screengrab Blender and Rhino/gh"](/rm_img/Screenshot%202024-09-04%20232517.png?raw=true)
+!["Screengrab Blender and Rhino/GH"](/rm_img/Screenshot%202024-09-04%20232517.png?raw=true)
 <p><small>Push animated mesh data from Blender to Grasshopper</small></p>
 
 ![gif_demo](/rm_img/gif_demo.gif)
 <p><small>Animation Blender - Rhino/GH</small></p>
 
-
 <br>
 
+## Data Structure - Default Cube Example
 
-## data structure - Default Cube example
+Data gets saved as .npy to the directory specified in the UI.
 
-Data gets saved as .npy to /dir specified in UI. 
-
-### vertices - xyz coordinates 
+### Vertices - XYZ Coordinates
 ```json
 [
     [
@@ -41,7 +39,7 @@ Data gets saved as .npy to /dir specified in UI.
 ]
 ```
 
-### faces - vertex indices per face
+### Faces - Vertex Indices per Face
 ```json
 [
     [0, 1, 2, 3],
@@ -53,7 +51,7 @@ Data gets saved as .npy to /dir specified in UI.
 ]
 ```
 
-### edges - indices connected
+### Edges - Indices Connected
 Mesh reconstruction only uses Vertex and Face Data. Edge Data is optional and can be used for later calculations.
 ```json
 [
@@ -72,7 +70,7 @@ Mesh reconstruction only uses Vertex and Face Data. Edge Data is optional and ca
 ]
 ``` 
 
-## selection methods - frame sequence
+## Selection Methods - Frame Sequence
 
 <div style="display: flex; justify-content: space-between;">
   <div style="text-align: center; margin-right: 10px;">
