@@ -73,17 +73,19 @@ Mesh reconstruction only uses Vertex and Face Data. Edge Data is optional and ca
 
 ## Selection Methods - Frame Sequence
 
-<div style="display: flex; justify-content: space-between;">
-  <div style="text-align: center; margin-right: 10px;">
-    <img src="./rm_img/frame_selection/use_timeline_settings.jpg" alt="Use Timeline Settings" style="width: 100%;">
-    <p style="text-align: left;">Uses Timeline settings. They can be accessed in Blenders timeline-panel on the top right corner. Set the start/end values.</p>
-  </div>
-  <div style="text-align: center; margin-right: 10px;">
-    <img src="./rm_img/frame_selection/step_rate.jpg" alt="Step Rate" style="width: 100%;">
-    <p style="text-align: left;">Set start/end/step values independent of Blenders timeline settings</p>
-  </div>
-  <div style="text-align: center;">
-    <img src="./rm_img/frame_selection/frame_list.jpg" alt="Frame List" style="width: 100%;">
-    <p style="text-align: left;">Input your custom list of frame indices. Step rate is irrelevant and doesn't need to be consistent within the list - choose indices freely.</p>
-  </div>
-</div>
+<table>
+  <tr>
+    <td style="text-align: center;">
+      <img src="./rm_img/frame_selection/use_timeline_settings.jpg" alt="Use Timeline Settings" style="width: 100%;">
+      <p style="text-align: left;">Uses Timeline settings. They can be accessed in Blender's timeline panel on the top right corner. Set the start/end values.</p>
+    </td>
+    <td style="text-align: center;">
+      <img src="./rm_img/frame_selection/step_rate.jpg" alt="Step Rate" style="width: 100%;">
+      <p style="text-align: left;">Set start/end/step values independent of Blender's timeline settings.</p>
+    </td>
+    <td style="text-align: center;">
+      <img src="./rm_img/frame_selection/frame_list.jpg" alt="Frame List" style="width: 100%;">
+      <p style="text-align: left;">Input your custom list of frame indices. Step rate is irrelevant and doesn't need to be consistent within the list - choose indices freely.</p>
+    </td>
+  </tr>
+</table>
