@@ -69,6 +69,7 @@ Mesh reconstruction only uses Vertex and Face Data. Edge Data is optional and ca
     [3, 7]
 ]
 ``` 
+<br>
 
 ## Selection Methods - Frame Sequence
 
