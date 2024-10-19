@@ -23,25 +23,30 @@ def framessequence_list():
 
     tool_settings = bpy.context.scene.my_tool
 
-    #option1: use timeline settings
+    #option 1: use timeline settings
     if tool_settings.frame_selection_mode == 'TIMELINE':
         start = bpy.data.scenes["Scene"].frame_start
         end = bpy.data.scenes["Scene"].frame_end
         frames = list(range(start, end + 1))
+
+    #option 2: current frame
+    elif tool_settings.frame_selection_mode == 'CURRENT':
+        current_frame = bpy.context.scene.frame_current
+        frames = [current_frame]
     
-    #option 2: start, end, step
+    #option 3: start, end, step
     elif tool_settings.frame_selection_mode == 'RANGE':
         start = tool_settings.start_frame
         end = tool_settings.end_frame
         step = tool_settings.step_rate
         frames = list(range(start, end + 1, step))
     
-    #option 3: custom list
+    #option 4: custom list
     elif tool_settings.frame_selection_mode == 'CUSTOM':
         input_string = tool_settings.custom_frames_input
         frames = [int(x) for x in input_string.split(',') if x.strip().isdigit()]
     
-    #option 4: csv file
+    #option 5: csv file
     elif tool_settings.frame_selection_mode == 'CSV':
         frames = []
         try:
@@ -148,6 +153,7 @@ class MyProperties(PropertyGroup):
         description="Choose how to select frames",
         items=[
             ('TIMELINE', "Use Timeline Settings", "Use frames from Blender's timeline"),
+            ("CURRENT", "Current Frame", "Use the current frame"),
             ('RANGE', "Start, End, Step Rate", "Specify start, end, and step rate"),
             ('CUSTOM', "Custom Frame List", "Enter custom frame numbers"),
             ("CSV", "Frames from CSV", "Select a CSV file with frame numbers")
