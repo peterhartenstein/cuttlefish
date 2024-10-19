@@ -12,6 +12,7 @@ bl_info = {
 import bpy
 import time as t
 import numpy as np
+import csv
 from pathlib import Path
 from bpy.props import(StringProperty, PointerProperty, BoolProperty, EnumProperty, IntProperty)
 from bpy.types import (Panel, PropertyGroup, Operator)
@@ -40,7 +41,23 @@ def framessequence_list():
         input_string = tool_settings.custom_frames_input
         frames = [int(x) for x in input_string.split(',') if x.strip().isdigit()]
     
+    #option 4: csv file
+    elif tool_settings.frame_selection_mode == 'CSV':
+        frames = []
+        try:
+            with open(tool_settings.csv_file_path, mode='r') as file:
+                csv_reader = csv.reader(file)
+                for row in csv_reader:
+                    for value in row:
+                        try:
+                            frames.append(int(value))
+                        except ValueError:
+                            raise ValueError(f"Error: '{value}' in CSV is not an integer")
+        except FileNotFoundError:
+            raise FileNotFoundError(f"Error: File '{tool_settings.csv_file_path}' not found")
+
     return frames
+
 
 def get_vertco(FRAMES, obj):
 
@@ -132,11 +149,20 @@ class MyProperties(PropertyGroup):
         items=[
             ('TIMELINE', "Use Timeline Settings", "Use frames from Blender's timeline"),
             ('RANGE', "Start, End, Step Rate", "Specify start, end, and step rate"),
-            ('CUSTOM', "Custom Frame List", "Enter custom frame numbers")
+            ('CUSTOM', "Custom Frame List", "Enter custom frame numbers"),
+            ("CSV", "Frames from CSV", "Select a CSV file with frame numbers")
         ],
         default='TIMELINE'
     )
     
+    csv_file_path: StringProperty(
+        name="CSV File Path",
+        description="Select a CSV file with frame numbers",
+        default="File Path",
+        maxlen=1024,
+        subtype='FILE_PATH'
+    )
+
     # start, end, step
     start_frame: IntProperty(
         name="Start Frame",
@@ -180,7 +206,7 @@ class MyProperties(PropertyGroup):
     export_faces: BoolProperty(
         name="Faces",
         description="Export face data",
-        default=False
+        default=True
     )
 
 
@@ -276,13 +302,18 @@ class VIEW3D_PT_cuttlefish(bpy.types.Panel):
             row = layout.row()
             row.prop(my_tool, "custom_frames_input", text="Custom Frames")
 
+        #csv file
+        elif my_tool.frame_selection_mode == 'CSV':
+            row = layout.row()
+            row.prop(my_tool, "csv_file_path", text="CSV File")
+
         #BTogs for vert,edge,face
         row = layout.row()
         row.label(text="Export Mesh Data")
         row = layout.row(align=True)
         row.prop(my_tool, "export_vertices", text="Vertices")
-        row.prop(my_tool, "export_edges", text="Edges")
         row.prop(my_tool, "export_faces", text="Faces")
+        row.prop(my_tool, "export_edges", text="Edges")
         
         #export button
         row = layout.row()
