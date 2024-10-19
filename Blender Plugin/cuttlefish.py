@@ -102,35 +102,60 @@ def get_vertco(FRAMES, obj):
     return vert_data
 
 
-def get_edges(FRAMES, obj):
+def get_edges(FRAMES, obj, calculate_per_frame):
     
     frame_quantity = len(FRAMES)
     edgecount = len(obj.data.edges)
-    edge_data = np.empty(shape=(frame_quantity, edgecount, 2), dtype=np.int32)
+    
+    if calculate_per_frame == "PER_FRAME":
+        edge_data = np.empty(shape=(frame_quantity, edgecount, 2), dtype=np.int32)
+    else:
+        edge_data = np.empty(shape=(edgecount, 2), dtype=np.int32)
+        frame_quantity = 1
 
     for i in range(frame_quantity):
-        bpy.context.scene.frame_set(FRAMES[i])
+        if calculate_per_frame == "PER_FRAME":
+            bpy.context.scene.frame_set(FRAMES[i])
+
         depsgraph = bpy.context.evaluated_depsgraph_get()
         obj_eval = obj.evaluated_get(depsgraph)
         edges = obj_eval.data.edges
-        for j, edge in enumerate(edges):
-            edge_data[i, j, 0] = edge.vertices[0]
-            edge_data[i, j, 1] = edge.vertices[1]
 
+        for j, edge in enumerate(edges):
+            if calculate_per_frame == "PER_FRAME":
+                edge_data[i, j, 0] = edge.vertices[0]
+                edge_data[i, j, 1] = edge.vertices[1]
+            else:
+                edge_data[j, 0] = edge.vertices[0]
+                edge_data[j, 1] = edge.vertices[1]
+                
     return edge_data
 
 
-def get_faces(FRAMES, obj):
+def get_faces(FRAMES, obj, calculate_per_frame):
+
     framequantity = len(FRAMES)
     facecount = len(obj.data.polygons)
-    face_data = np.empty(shape=(framequantity, facecount), dtype=object)
+
+    if calculate_per_frame == "PER_FRAME": 
+        face_data = np.empty(shape=(framequantity, facecount), dtype=object)
+    else:
+        face_data = np.empty(shape=(facecount), dtype=object)  
+        framequantity = 1
 
     for i in range(framequantity):
+        if calculate_per_frame == "PER_FRAME":
+            bpy.context.scene.frame_set(FRAMES[i])
+
         depsgraph = bpy.context.evaluated_depsgraph_get()
         obj_eval = obj.evaluated_get(depsgraph)
         faces = obj_eval.data.polygons
+
         for j, face in enumerate(faces):
-            face_data[i, j] = [v for v in face.vertices]
+            if calculate_per_frame == "PER_FRAME":
+                face_data[i, j] = [v for v in face.vertices]
+            else:
+                face_data[j] = [v for v in face.vertices]
 
     return face_data
 
@@ -215,6 +240,16 @@ class CuttlefishProperties(PropertyGroup):
         default=True
     )
 
+    calculate_per_frame: EnumProperty(
+        name="Calculate per Frame",
+        description="Calculate edge and face data...",
+                items=[
+            ("PER_FRAME", "calculate for every frame - SLOW", "Calculate edge and face data for every frame"),
+            ("ONCE", "calculate once - FAST (default)", "Calculate edge and face data only once")
+        ],
+        default='ONCE'
+    )
+
 
 class ExportMeshData(bpy.types.Operator):
 
@@ -229,6 +264,7 @@ class ExportMeshData(bpy.types.Operator):
         start_time = t.time()
         obj = context.scene.cuttlefish_tool.selected_object
         frames = framessequence_list()
+        calculate_per_frame = context.scene.cuttlefish_tool.calculate_per_frame
 
         base_path = context.scene.cuttlefish_tool.path.replace("\\", "/").rstrip("/")
 
@@ -238,12 +274,12 @@ class ExportMeshData(bpy.types.Operator):
             save_npy(vertices,filepath)
 
         if context.scene.cuttlefish_tool.export_edges:
-            edges = get_edges(frames, obj)
+            edges = get_edges(frames, obj, calculate_per_frame)
             filepath = base_path + "/edges.npy"
             save_npy(vertices,filepath)
 
         if context.scene.cuttlefish_tool.export_faces:
-            faces = get_faces(frames, obj)
+            faces = get_faces(frames, obj, calculate_per_frame)
             filepath = base_path + "/faces.npy"
             save_npy(faces,filepath)
 
@@ -321,6 +357,10 @@ class VIEW3D_PT_cuttlefish(bpy.types.Panel):
         row.prop(cuttlefish_tool, "export_faces", text="Faces")
         row.prop(cuttlefish_tool, "export_edges", text="Edges")
         
+        #face and edge calculation
+        row = layout.row()
+        row.prop(cuttlefish_tool, "calculate_per_frame", text="Face and Edge Data")
+
         #export button
         row = layout.row()
         row.operator("object.export_vert_coords")             
