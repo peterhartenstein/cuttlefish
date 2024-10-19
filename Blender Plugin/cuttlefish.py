@@ -21,7 +21,7 @@ print("start--------------------------------------------------------------------
 
 def framessequence_list():
 
-    tool_settings = bpy.context.scene.my_tool
+    tool_settings = bpy.context.scene.cuttlefish_tool
 
     #option 1: use timeline settings
     if tool_settings.frame_selection_mode == 'TIMELINE':
@@ -139,7 +139,7 @@ def save_npy(np_array, filepath):
     np.save(filepath, np_array)
 
 
-class MyProperties(PropertyGroup):
+class CuttlefishProperties(PropertyGroup):
 
     path: StringProperty(
         name="",
@@ -223,26 +223,26 @@ class ExportMeshData(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
-        return context.scene.my_tool.selected_object is not None
+        return context.scene.cuttlefish_tool.selected_object is not None
 
     def execute(self, context):
         start_time = t.time()
-        obj = context.scene.my_tool.selected_object
+        obj = context.scene.cuttlefish_tool.selected_object
         frames = framessequence_list()
 
-        base_path = context.scene.my_tool.path.replace("\\", "/").rstrip("/")
+        base_path = context.scene.cuttlefish_tool.path.replace("\\", "/").rstrip("/")
 
-        if context.scene.my_tool.export_vertices:
+        if context.scene.cuttlefish_tool.export_vertices:
             vertices = get_vertco(frames, obj)      
             filepath = base_path + "/vertices.npy"
             save_npy(vertices,filepath)
 
-        if context.scene.my_tool.export_edges:
+        if context.scene.cuttlefish_tool.export_edges:
             edges = get_edges(frames, obj)
             filepath = base_path + "/edges.npy"
             save_npy(vertices,filepath)
 
-        if context.scene.my_tool.export_faces:
+        if context.scene.cuttlefish_tool.export_faces:
             faces = get_faces(frames, obj)
             filepath = base_path + "/faces.npy"
             save_npy(faces,filepath)
@@ -266,60 +266,60 @@ class VIEW3D_PT_cuttlefish(bpy.types.Panel):
                 
         layout = self.layout
         scene = context.scene
-        my_tool = scene.my_tool
+        cuttlefish_tool = scene.cuttlefish_tool
         
         #object pipette
         row = layout.row()
-        row.prop(my_tool, "selected_object", text="Object")
+        row.prop(cuttlefish_tool, "selected_object", text="Object")
 
         #object info
-        if my_tool.selected_object:
+        if cuttlefish_tool.selected_object:
             row = layout.row()
-            row.label(text="Selected Object: {}".format(my_tool.selected_object.name))
+            row.label(text="Selected Object: {}".format(cuttlefish_tool.selected_object.name))
 
             row = layout.row()
-            row.label(text="Vertex Count: {}".format(len(my_tool.selected_object.data.vertices)))
+            row.label(text="Vertex Count: {}".format(len(cuttlefish_tool.selected_object.data.vertices)))
 
         #save file path
         row = layout.column(align=True)
-        row.prop(scene.my_tool, "path", text ="")
+        row.prop(scene.cuttlefish_tool, "path", text ="")
 
 
         #Frame Selection Mode
         row = layout.row()
-        row.prop(my_tool, "frame_selection_mode", text="Frame Selection Mode")
+        row.prop(cuttlefish_tool, "frame_selection_mode", text="Frame Selection Mode")
 
         #use timeline settings
-        if my_tool.frame_selection_mode == 'TIMELINE':
+        if cuttlefish_tool.frame_selection_mode == 'TIMELINE':
             row = layout.row()
             row.label(text="Using Timeline Settings")
 
         #start end step
-        elif my_tool.frame_selection_mode == 'RANGE':
+        elif cuttlefish_tool.frame_selection_mode == 'RANGE':
             row = layout.row()
-            row.prop(my_tool, "start_frame", text="Start Frame")
+            row.prop(cuttlefish_tool, "start_frame", text="Start Frame")
             row = layout.row()
-            row.prop(my_tool, "end_frame", text="End Frame")
+            row.prop(cuttlefish_tool, "end_frame", text="End Frame")
             row = layout.row()
-            row.prop(my_tool, "step_rate", text="Step Rate")
+            row.prop(cuttlefish_tool, "step_rate", text="Step Rate")
 
         #custom frame list
-        elif my_tool.frame_selection_mode == 'CUSTOM':
+        elif cuttlefish_tool.frame_selection_mode == 'CUSTOM':
             row = layout.row()
-            row.prop(my_tool, "custom_frames_input", text="Custom Frames")
+            row.prop(cuttlefish_tool, "custom_frames_input", text="Custom Frames")
 
         #csv file
-        elif my_tool.frame_selection_mode == 'CSV':
+        elif cuttlefish_tool.frame_selection_mode == 'CSV':
             row = layout.row()
-            row.prop(my_tool, "csv_file_path", text="CSV File")
+            row.prop(cuttlefish_tool, "csv_file_path", text="CSV File")
 
         #BTogs for vert,edge,face
         row = layout.row()
         row.label(text="Export Mesh Data")
         row = layout.row(align=True)
-        row.prop(my_tool, "export_vertices", text="Vertices")
-        row.prop(my_tool, "export_faces", text="Faces")
-        row.prop(my_tool, "export_edges", text="Edges")
+        row.prop(cuttlefish_tool, "export_vertices", text="Vertices")
+        row.prop(cuttlefish_tool, "export_faces", text="Faces")
+        row.prop(cuttlefish_tool, "export_edges", text="Edges")
         
         #export button
         row = layout.row()
@@ -338,7 +338,7 @@ class VIEW3D_PT_cuttlefish(bpy.types.Panel):
 # Registration
 
 classes = (
-    MyProperties,
+    CuttlefishProperties,
     ExportMeshData,
     VIEW3D_PT_cuttlefish
 )
@@ -348,14 +348,14 @@ def register():
     for cls in classes:
         register_class(cls)
 
-    bpy.types.Scene.my_tool = PointerProperty(type=MyProperties)
+    bpy.types.Scene.cuttlefish_tool = PointerProperty(type=CuttlefishProperties)
 
 def unregister():
     from bpy.utils import unregister_class
     for cls in reversed(classes):
         unregister_class(cls)
 
-    del bpy.types.Scene.mytool
+    del bpy.types.Scene.cuttlefish_tool
     
 
 if __name__ == "__main__":
