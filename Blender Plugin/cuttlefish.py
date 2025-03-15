@@ -1,7 +1,7 @@
 bl_info = {
     "name": "cuttlefish",
     "author": "Peter Hartenstein",
-    "version": (0, 0, 2),
+    "version": (0, 0, 3),
     "blender": (4, 20, 0),
     "location": "3D Viewport > Sidebar > cuttlefish",
     "description": "Translating animated geometry from Blender to Grasshopper",
@@ -276,7 +276,7 @@ class ExportMeshData(bpy.types.Operator):
         if context.scene.cuttlefish_tool.export_edges:
             edges = get_edges(frames, obj, calculate_per_frame)
             filepath = base_path + "/edges.npy"
-            save_npy(vertices,filepath)
+            save_npy(edges,filepath)
 
         if context.scene.cuttlefish_tool.export_faces:
             faces = get_faces(frames, obj, calculate_per_frame)
