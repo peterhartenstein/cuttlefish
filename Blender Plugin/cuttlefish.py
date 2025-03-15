@@ -240,7 +240,7 @@ class ExportMeshData(bpy.types.Operator):
         if context.scene.cuttlefish_tool.export_edges:
             edges = get_edges(frames, obj)
             filepath = base_path + "/edges.npy"
-            save_npy(vertices,filepath)
+            save_npy(edges,filepath)
 
         if context.scene.cuttlefish_tool.export_faces:
             faces = get_faces(frames, obj)
