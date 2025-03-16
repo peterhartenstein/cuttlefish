@@ -7,3 +7,4 @@
 *.fbx
 *.obj
 *.csv
+*_metadata.json

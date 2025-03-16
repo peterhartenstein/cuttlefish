@@ -1,7 +1,7 @@
 bl_info = {
     "name": "cuttlefish",
     "author": "Peter Hartenstein",
-    "version": (0, 0, 3),
+    "version": (0, 0, 4),
     "blender": (4, 20, 0),
     "location": "3D Viewport > Sidebar > cuttlefish",
     "description": "Translating animated geometry from Blender to Grasshopper",
@@ -13,6 +13,7 @@ import bpy
 import time as t
 import numpy as np
 import csv
+import json
 from pathlib import Path
 from bpy.props import(StringProperty, PointerProperty, BoolProperty, EnumProperty, IntProperty)
 from bpy.types import (Panel, PropertyGroup, Operator)
@@ -164,6 +165,22 @@ def save_npy(np_array, filepath):
     np.save(filepath, np_array)
 
 
+def save_metadata(base_path, obj_name, edge_face_data, frames, vertex_count, edge_count, face_count):
+    metadata = {
+        "mesh_name": obj_name,
+        "edge_face_data": edge_face_data,
+        "frames": frames,
+        "vertex_count": vertex_count,
+        "edge_count": edge_count,
+        "face_count": face_count,
+        "export_time": t.strftime("%Y-%m-%d_%H:%M:%S", t.localtime())
+    }
+
+    filepath = f"{base_path}/{obj_name}_metadata.json"
+    with open(filepath, 'w') as file:
+        json.dump(metadata, file, indent=4)
+
+
 class CuttlefishProperties(PropertyGroup):
 
     path: StringProperty(
@@ -267,20 +284,28 @@ class ExportMeshData(bpy.types.Operator):
         calculate_per_frame = context.scene.cuttlefish_tool.calculate_per_frame
 
         base_path = context.scene.cuttlefish_tool.path.replace("\\", "/").rstrip("/")
+        obj_name = obj.name.replace(" ", "_")
+        edge_face_data = calculate_per_frame # for metadata
+
+        vertex_count = len(obj.data.vertices)
+        edge_count = len(obj.data.edges)
+        face_count = len(obj.data.polygons)
+
+        save_metadata(base_path, obj_name, edge_face_data, frames, vertex_count, edge_count, face_count)
 
         if context.scene.cuttlefish_tool.export_vertices:
             vertices = get_vertco(frames, obj)      
-            filepath = base_path + "/vertices.npy"
+            filepath = f"{base_path}/{obj_name}_vertices.npy"
             save_npy(vertices,filepath)
 
         if context.scene.cuttlefish_tool.export_edges:
             edges = get_edges(frames, obj, calculate_per_frame)
-            filepath = base_path + "/edges.npy"
+            filepath = f"{base_path}/{obj_name}_edges.npy"
             save_npy(edges,filepath)
 
         if context.scene.cuttlefish_tool.export_faces:
             faces = get_faces(frames, obj, calculate_per_frame)
-            filepath = base_path + "/faces.npy"
+            filepath = f"{base_path}/{obj_name}_faces.npy"
             save_npy(faces,filepath)
 
         end_time = t.time()
